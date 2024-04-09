@@ -14,10 +14,11 @@ const applySampleRules = (lineItems, maxQty, sampleProductType) => {
   let count = 0;
   lineItems.forEach((lineItem) => {
     if (lineItem?.productType.id === sampleProductType) {
-      count += 1;
+      count += lineItem.quantity;
     }
   });
 
+  console.log(count);
   return count <= maxQty;
 };
 
@@ -78,7 +79,7 @@ app.post("/ct-cart", async (req, res) => {
     });
   }
 
-  if (applySampleRules(lineItems, 2, "600388e2-0976-493e-929d-91800b0b3207")) {
+  if (!applySampleRules(lineItems, 2, "600388e2-0976-493e-929d-91800b0b3207")) {
     res.status(400).json({
       errors: [
         {
