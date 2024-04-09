@@ -18,7 +18,7 @@ app.post("/ct-cart", async (req, res) => {
   //console.log("Cart is:");
   //console.log(JSON.stringify(cart.totalPrice));
 
-  totalPrice = cart.totalPrice.centAmount / 100;
+  const totalPrice = cart.totalPrice.centAmount / 100;
 
   console.log("Total price is:");
   console.log(totalPrice);
