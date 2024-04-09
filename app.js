@@ -50,7 +50,18 @@ app.post("/ct-cart", async (req, res) => {
   console.log("Product rules:");
   console.log(productRules);
 
-  return res.status(200).end();
+  if (totalPrice <= maximumCartValue) {
+    return res.status(200).end();
+  } else {
+    res.status(400).json({
+      errors: [
+        {
+          code: "InvalidInput",
+          message: "The maximum value for the cart has been exceeded.",
+        },
+      ],
+    });
+  }
 });
 
 app.listen(PORT, () => {
