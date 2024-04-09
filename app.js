@@ -11,7 +11,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/ct-cart", (req, res) => {
-  const store = req.body.resource.obj.store;
+  const storeKey = req.body.resource.obj.store.key;
   const customerId = req.body.resource.obj.customerId;
 
   console.log("store is:");
@@ -22,17 +22,23 @@ app.post("/ct-cart", (req, res) => {
   const data = buffer ? JSON.parse(buffer.toString()) : null;
  */
 
-  fetchCt(`customers/${customerId}?expand=customerGroup`, {
-    method: "GET",
-  })
+  const customerGroupKey = fetchCt(
+    `customers/${customerId}?expand=customerGroup`,
+    {
+      method: "GET",
+    }
+  )
     .then((response) => response.json())
     .then((response) => {
-      console.log("Customer group key:");
-      console.log(JSON.stringify(response?.customerGroup?.obj?.key, null, 4));
+      // console.log(JSON.stringify(response?.customerGroup?.obj?.key, null, 4));
+      return response?.customerGroup?.obj?.key;
       // console.log("Locale is", response.locale);
     });
 
-  fetchCt(`custom-objects/general-cart-rules/french-store-test`, {
+  console.log("Customer group key:");
+  console.log(customerGroupKey);
+
+  fetchCt(`custom-objects/general-cart-rules/${storeKey}`, {
     method: "GET",
   })
     .then((response) => response.json())
