@@ -11,23 +11,34 @@ app.get("/", (req, res) => {
 });
 
 app.post("/ct-cart", (req, res) => {
-  // console.log("what?");
-  const message = req.body ? req.body.message : null;
+  const store = req.body.resource.obj.store;
+  const customerId = req.body.resource.obj.customerId;
 
-  console.log(req.body);
+  console.log("store is:");
+  console.log(store);
 
   /**
   const buffer = Buffer.from(message.data, "base64");
   const data = buffer ? JSON.parse(buffer.toString()) : null;
  */
 
+  fetchCt(`customers/${customerId}?expand=customerGroup`, {
+    method: "GET",
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      console.log("Customer group key:");
+      console.log(JSON.stringify(response?.customerGroup?.obj?.key, null, 4));
+      // console.log("Locale is", response.locale);
+    });
+
   fetchCt(`custom-objects/general-cart-rules/french-store-test`, {
     method: "GET",
   })
     .then((response) => response.json())
     .then((response) => {
-      console.log("Custom objects:");
-      console.log(JSON.stringify(response, null, 4));
+      //console.log("Custom objects:");
+      //console.log(JSON.stringify(response, null, 4));
       // console.log("Locale is", response.locale);
     });
 
