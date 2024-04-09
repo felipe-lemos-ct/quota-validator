@@ -10,13 +10,25 @@ app.get("/", (req, res) => {
   res.send("Welcome to subscription handler.");
 });
 
+const applySampleRules = (lineItems, maxQty, sampleProductType) => {
+  let count = 0;
+  lineItems.forEach((lineItem) => {
+    if (lineItem?.productType.id === sampleProductType) {
+      count += 1;
+    }
+  });
+
+  return count <= maxQty;
+};
+
 app.post("/ct-cart", async (req, res) => {
   //const store = req.body.resource.obj.store;
   const storeKey = req.body.resource.obj.store.key;
   const customerId = req.body.resource.obj.customerId;
   const cart = req.body.resource.obj;
-  console.log("Cart is:");
-  console.log(JSON.stringify(cart));
+  const lineItems = cart.lineItems;
+  //console.log("LineItems are:");
+  //console.log(JSON.stringify(lineItems));
 
   const totalPrice = cart.totalPrice.centAmount / 100;
 
@@ -55,9 +67,7 @@ app.post("/ct-cart", async (req, res) => {
   console.log("Product rules:");
   console.log(productRules);
 
-  if (totalPrice <= maximumCartValue) {
-    return res.status(200).end();
-  } else {
+  if (totalPrice > maximumCartValue) {
     res.status(400).json({
       errors: [
         {
@@ -67,6 +77,19 @@ app.post("/ct-cart", async (req, res) => {
       ],
     });
   }
+
+  if (applySampleRules(lineItems, 2, "600388e2-0976-493e-929d-91800b0b3207")) {
+    res.status(400).json({
+      errors: [
+        {
+          code: "InvalidInput",
+          message: "The maximum qty of Samples has been exceeded.",
+        },
+      ],
+    });
+  }
+
+  return res.status(200).end();
 });
 
 app.listen(PORT, () => {
