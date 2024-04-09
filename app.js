@@ -21,6 +21,74 @@ const applySampleRules = (lineItems, maxQty, sampleProductType) => {
   return count <= maxQty;
 };
 
+const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
+  const wantedCategoryId = categoryId;
+
+  const fetchPromises = lineItems.map(async (lineItem) => {
+    const response = await fetchCt(`products/${lineItem.productId}`, {
+      method: "GET",
+    });
+    const responseData = await response.json();
+    return {
+      lineItem: lineItem,
+      categories: responseData.masterData?.current?.categories,
+    };
+  });
+
+  Promise.all(fetchPromises)
+    .then((promises) => {
+      if (criteria === "quantity") {
+        //NEED TO CHECK QTY OF THAT LINE ITEM:
+        let lineQty = 0;
+        promises.forEach((promise) => {
+          promise.categories.forEach((category) => {
+            if (category.id === wantedCategoryId) {
+              lineQty += promise.lineItem.quantity;
+            }
+          });
+
+          //console.log(totalValue);
+        });
+
+        if (totalValue <= lineQty) {
+          return true;
+        }
+
+        const categoriesForFlatten = promises.map((promise) => {
+          if (promise.categories.length > 0) {
+            return promise.categories;
+          }
+        });
+
+        const flatCategories = categoriesForFlatten.flat();
+
+        let categoryIds = flatCategories.map((category) => {
+          if (category) {
+            return category.id;
+          }
+        });
+
+        categoryIds = categoryIds.filter(Boolean);
+
+        let categoryIdsAndCounts = categoryIds?.reduce(function (
+          value,
+          value2
+        ) {
+          return value[value2] ? ++value[value2] : (value[value2] = 1), value;
+        },
+        {});
+
+        if (totalValue > lineQty) {
+          console.log("I should not be here.");
+          return categoryIdsAndCounts[wantedCategoryId] <= totalValue;
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching categories:", error);
+    });
+};
+
 const applySKURules = (lineItems, sku, criteria, totalValue) => {
   let count = 0;
 
@@ -49,7 +117,6 @@ app.post("/ct-cart", async (req, res) => {
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
 
-  console.log(JSON.stringify(cart));
   const totalPrice = cart.totalPrice.centAmount / 100;
 
   const customerGroupKey = await fetchCt(
@@ -79,15 +146,12 @@ app.post("/ct-cart", async (req, res) => {
       return response.value;
     });
 
+  let cartErrorFound = false;
+  let ruleFlag = null;
+
   if (totalPrice > maximumCartValue) {
-    res.status(400).json({
-      errors: [
-        {
-          code: "InvalidInput",
-          message: "The maximum value for the cart has been exceeded.",
-        },
-      ],
-    });
+    cartErrorFound = !true;
+    ruleFlag = { criteria: "value" };
   }
 
   if (
@@ -108,9 +172,9 @@ app.post("/ct-cart", async (req, res) => {
   }
 
   let productErrorFound = false;
-  let ruleFlag = null;
+
   productRules.forEach((rule) => {
-    if (!productErrorFound) {
+    if (!productErrorFound && !cartErrorFound) {
       ruleFlag = rule;
       if (rule.type === "sku") {
         productErrorFound = !applySKURules(
@@ -120,15 +184,31 @@ app.post("/ct-cart", async (req, res) => {
           rule.value
         );
       }
+      if (rule.type === "category") {
+        ruleFlag = {
+          type: rule.type,
+          value: rule.value,
+          criteria: rule.criteria,
+          equals: rule.equals.categoryName["en-US"],
+        };
+        productErrorFound = !applyCategoryRules(
+          lineItems,
+          rule.equals.categoryId,
+          rule.criteria,
+          rule.value
+        );
+      }
     }
   });
 
-  if (productErrorFound) {
+  if (cartErrorFound || productErrorFound) {
     return res.status(400).json({
       errors: [
         {
           code: "InvalidInput",
-          message: `The maximum total ${ruleFlag.criteria} allowed for ${ruleFlag.type} = ${ruleFlag.equals} has been exceeded.`,
+          message: `The maximum total ${ruleFlag.criteria} allowed ${
+            ruleFlag.type ? `for ${ruleFlag.type} = ${ruleFlag.equals}` : `cart`
+          } has been exceeded.`,
         },
       ],
     });
