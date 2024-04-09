@@ -14,10 +14,12 @@ app.post("/ct-cart", (req, res) => {
   // console.log("what?");
   const message = req.body ? req.body.message : null;
 
-  console.log(JSON.stringify(req));
+  console.log(JSON.stringify(req, null, 4));
 
+  /**
   const buffer = Buffer.from(message.data, "base64");
   const data = buffer ? JSON.parse(buffer.toString()) : null;
+ */
 
   fetchCt(`custom-objects/general-cart-rules/french-store-test`, {
     method: "GET",
