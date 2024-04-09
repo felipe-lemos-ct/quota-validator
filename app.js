@@ -29,7 +29,7 @@ app.post("/ct-cart", (req, res) => {
       // console.log("Locale is", response.locale);
     });
 
-  return res.sendStatus(200);
+  return res.send(200);
 });
 
 app.listen(PORT, () => {
