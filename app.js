@@ -34,8 +34,13 @@ app.post("/ct-cart", async (req, res) => {
       return response?.customerGroup?.obj?.key;
     });
 
+  let objectKey = "general-cart-rules";
+  if (customerGroupKey === "employees") {
+    objectKey = "employee-cart-rules";
+  }
+
   const { maximumCartValue, productRules } = await fetchCt(
-    `custom-objects/general-cart-rules/${storeKey}`,
+    `custom-objects/${objectKey}/${storeKey}`,
     {
       method: "GET",
     }
