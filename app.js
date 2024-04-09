@@ -18,23 +18,38 @@ const applySampleRules = (lineItems, maxQty, sampleProductType) => {
     }
   });
 
-  console.log(count);
   return count <= maxQty;
 };
 
+const applySKURules = (lineItems, sku, criteria, totalValue) => {
+  let count = 0;
+
+  let value = null;
+
+  lineItems.forEach((lineItem) => {
+    if (lineItem?.variant.sku === sku) {
+      if (criteria === "quantity") {
+        count += lineItem.quantity;
+      }
+      if (criteria === "value") {
+        value = parseInt(lineItem.totalPrice.centAmount) <= totalValue * 100;
+      }
+    }
+  });
+
+  if (value !== null) {
+    return value;
+  }
+  return count <= totalValue;
+};
+
 app.post("/ct-cart", async (req, res) => {
-  //const store = req.body.resource.obj.store;
   const storeKey = req.body.resource.obj.store.key;
   const customerId = req.body.resource.obj.customerId;
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
-  //console.log("LineItems are:");
-  //console.log(JSON.stringify(lineItems));
 
   const totalPrice = cart.totalPrice.centAmount / 100;
-
-  console.log("Total price is:");
-  console.log(totalPrice);
 
   const customerGroupKey = await fetchCt(
     `customers/${customerId}?expand=customerGroup`,
@@ -63,13 +78,6 @@ app.post("/ct-cart", async (req, res) => {
       return response.value;
     });
 
-  console.log("Maximum value for cart:");
-  console.log(maximumCartValue);
-  console.log("Product rules:");
-  console.log(productRules);
-  console.log("Maximum number of samples:");
-  console.log(maxSamples);
-
   if (totalPrice > maximumCartValue) {
     res.status(400).json({
       errors: [
@@ -92,12 +100,38 @@ app.post("/ct-cart", async (req, res) => {
       errors: [
         {
           code: "InvalidInput",
-          message: "The maximum qty of Samples has been exceeded.",
+          message: "The maximum quantity of Samples has been exceeded.",
         },
       ],
     });
   }
 
+  let productErrorFound = false;
+  let ruleFlag = null;
+  productRules.forEach((rule) => {
+    if (!productErrorFound) {
+      ruleFlag = rule;
+      if (rule.type === "sku") {
+        productErrorFound = !applySKURules(
+          lineItems,
+          rule.equals,
+          rule.criteria,
+          rule.value
+        );
+      }
+    }
+  });
+
+  if (productErrorFound) {
+    return res.status(400).json({
+      errors: [
+        {
+          code: "InvalidInput",
+          message: `The maximum total ${ruleFlag.criteria} allowed for ${ruleFlag.type} = ${ruleFlag.equals} has been exceeded.`,
+        },
+      ],
+    });
+  }
   return res.status(200).end();
 });
 
