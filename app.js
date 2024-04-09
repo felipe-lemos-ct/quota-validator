@@ -14,21 +14,22 @@ app.post("/ct-cart", (req, res) => {
   // console.log("what?");
   const message = req.body ? req.body.message : null;
 
-  if (message) {
-    //const buffer = Buffer.from(message.data, "base64");
-    //const data = buffer ? JSON.parse(buffer.toString()) : null;
+  console.log(JSON.stringify(req));
 
-    fetchCt(`custom-objects/general-cart-rules/french-store-test`, {
-      method: "GET",
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        console.log("Custom objects:");
-        console.log(JSON.stringify(response, null, 4));
-        // console.log("Locale is", response.locale);
-      });
-  }
-  return res.sendStatus(204);
+  const buffer = Buffer.from(message.data, "base64");
+  const data = buffer ? JSON.parse(buffer.toString()) : null;
+
+  fetchCt(`custom-objects/general-cart-rules/french-store-test`, {
+    method: "GET",
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      console.log("Custom objects:");
+      console.log(JSON.stringify(response, null, 4));
+      // console.log("Locale is", response.locale);
+    });
+
+  return res.sendStatus(200);
 });
 
 app.listen(PORT, () => {
