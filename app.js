@@ -11,11 +11,17 @@ app.get("/", (req, res) => {
 });
 
 app.post("/ct-cart", async (req, res) => {
-  const store = req.body.resource.obj.store;
+  //const store = req.body.resource.obj.store;
   const storeKey = req.body.resource.obj.store.key;
   const customerId = req.body.resource.obj.customerId;
-  console.log("Cart is:");
-  console.log(JSON.stringify(req.body.resource.obj));
+  const cart = req.body.resource.obj;
+  //console.log("Cart is:");
+  //console.log(JSON.stringify(cart.totalPrice));
+
+  totalPrice = cart.totalPrice.centAmount / 100;
+
+  console.log("Total price is:");
+  console.log(totalPrice);
 
   const customerGroupKey = await fetchCt(
     `customers/${customerId}?expand=customerGroup`,
