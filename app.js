@@ -35,7 +35,7 @@ app.post("/ct-cart", async (req, res) => {
     });
 
   let objectKey = "general-cart-rules";
-  if (customerGroupKey === "employees") {
+  if (customerGroupKey === "employee") {
     objectKey = "employee-cart-rules";
   }
 
