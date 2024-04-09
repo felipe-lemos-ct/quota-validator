@@ -14,7 +14,7 @@ app.post("/ct-cart", (req, res) => {
   // console.log("what?");
   const message = req.body ? req.body.message : null;
 
-  console.log(req);
+  console.log(req.body);
 
   /**
   const buffer = Buffer.from(message.data, "base64");
@@ -31,7 +31,7 @@ app.post("/ct-cart", (req, res) => {
       // console.log("Locale is", response.locale);
     });
 
-  return res.sendStatus(200);
+  return res.status(200).end();
 });
 
 app.listen(PORT, () => {
