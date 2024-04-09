@@ -15,7 +15,7 @@ app.post("/ct-cart", async (req, res) => {
   const storeKey = req.body.resource.obj.store.key;
   const customerId = req.body.resource.obj.customerId;
   console.log("Cart is:");
-  console.log(req.body.resource.obj);
+  console.log(JSON.stringify(req.body.resource.obj));
 
   const customerGroupKey = await fetchCt(
     `customers/${customerId}?expand=customerGroup`,
