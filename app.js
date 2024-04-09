@@ -10,19 +10,12 @@ app.get("/", (req, res) => {
   res.send("Welcome to subscription handler.");
 });
 
-app.post("/ct-cart", (req, res) => {
+app.post("/ct-cart", async (req, res) => {
+  const store = req.body.resource.obj.store;
   const storeKey = req.body.resource.obj.store.key;
   const customerId = req.body.resource.obj.customerId;
 
-  console.log("store is:");
-  console.log(store);
-
-  /**
-  const buffer = Buffer.from(message.data, "base64");
-  const data = buffer ? JSON.parse(buffer.toString()) : null;
- */
-
-  const customerGroupKey = fetchCt(
+  const customerGroupKey = await fetchCt(
     `customers/${customerId}?expand=customerGroup`,
     {
       method: "GET",
@@ -30,23 +23,24 @@ app.post("/ct-cart", (req, res) => {
   )
     .then((response) => response.json())
     .then((response) => {
-      // console.log(JSON.stringify(response?.customerGroup?.obj?.key, null, 4));
       return response?.customerGroup?.obj?.key;
-      // console.log("Locale is", response.locale);
     });
 
-  console.log("Customer group key:");
-  console.log(customerGroupKey);
-
-  fetchCt(`custom-objects/general-cart-rules/${storeKey}`, {
-    method: "GET",
-  })
+  const { maximumCartValue, productRules } = await fetchCt(
+    `custom-objects/general-cart-rules/${storeKey}`,
+    {
+      method: "GET",
+    }
+  )
     .then((response) => response.json())
     .then((response) => {
-      //console.log("Custom objects:");
-      //console.log(JSON.stringify(response, null, 4));
-      // console.log("Locale is", response.locale);
+      return response.value;
     });
+
+  console.log("Maximum value for cart:");
+  console.log(maximumCartValue);
+  console.log("Product rules:");
+  console.log(productRules);
 
   return res.status(200).end();
 });
