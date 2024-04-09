@@ -52,7 +52,7 @@ app.post("/ct-cart", async (req, res) => {
     objectKey = "employee-cart-rules";
   }
 
-  const { maximumCartValue, productRules } = await fetchCt(
+  const { maximumCartValue, maxSamples, productRules } = await fetchCt(
     `custom-objects/${objectKey}/${storeKey}`,
     {
       method: "GET",
@@ -67,6 +67,8 @@ app.post("/ct-cart", async (req, res) => {
   console.log(maximumCartValue);
   console.log("Product rules:");
   console.log(productRules);
+  console.log("Maximum number of samples:");
+  console.log(maxSamples);
 
   if (totalPrice > maximumCartValue) {
     res.status(400).json({
@@ -79,7 +81,13 @@ app.post("/ct-cart", async (req, res) => {
     });
   }
 
-  if (!applySampleRules(lineItems, 2, "600388e2-0976-493e-929d-91800b0b3207")) {
+  if (
+    !applySampleRules(
+      lineItems,
+      maxSamples,
+      "600388e2-0976-493e-929d-91800b0b3207"
+    )
+  ) {
     res.status(400).json({
       errors: [
         {
