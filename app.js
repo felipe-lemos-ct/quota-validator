@@ -49,6 +49,7 @@ app.post("/ct-cart", async (req, res) => {
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
 
+  console.log(JSON.stringify(lineItems));
   const totalPrice = cart.totalPrice.centAmount / 100;
 
   const customerGroupKey = await fetchCt(
