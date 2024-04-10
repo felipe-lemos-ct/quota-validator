@@ -197,6 +197,8 @@ app.post("/ct-cart", async (req, res) => {
     }
   }
 
+  console.log("Error found after Cart Maximum value?", errorFound);
+
   if (maxSamples) {
     console.log("Samples validation:");
     ruleFlag = { type: "samples", criteria: "quantity", equals: "Samples" };
