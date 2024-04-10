@@ -162,11 +162,11 @@ app.post("/ct-cart", async (req, res) => {
       return response.value;
     });
 
-  let cartErrorFound = false;
+  let errorFound = false;
   let ruleFlag = null;
 
   if (totalPrice > maximumCartValue) {
-    cartErrorFound = !true;
+    errorFound = true;
     ruleFlag = { criteria: "value" };
   }
 
@@ -187,39 +187,41 @@ app.post("/ct-cart", async (req, res) => {
     });
   }
 
-  let productErrorFound = false;
-
-  productRules.forEach((rule) => {
-    if (!productErrorFound && !cartErrorFound) {
-      ruleFlag = rule;
-      if (rule.type === "sku") {
-        productErrorFound = !applySKURules(
-          lineItems,
-          rule.equals,
-          rule.criteria,
-          rule.value
-        );
+  if (!errorFound) {
+    let productErrorFound = false;
+    productRules.forEach((rule) => {
+      if (!productErrorFound) {
+        ruleFlag = rule;
+        if (rule.type === "sku") {
+          productErrorFound = !applySKURules(
+            lineItems,
+            rule.equals,
+            rule.criteria,
+            rule.value
+          );
+        }
+        if (rule.type === "category") {
+          console.log("Category validation:");
+          console.log(rule);
+          ruleFlag = {
+            type: rule.type,
+            value: rule.value,
+            criteria: rule.criteria,
+            equals: rule.equals.categoryName["en-US"],
+          };
+          productErrorFound = applyCategoryRules(
+            lineItems,
+            rule.equals.categoryId,
+            rule.criteria,
+            rule.value
+          );
+        }
       }
-      if (rule.type === "category") {
-        console.log("Category validation:");
-        console.log(rule);
-        ruleFlag = {
-          type: rule.type,
-          value: rule.value,
-          criteria: rule.criteria,
-          equals: rule.equals.categoryName["en-US"],
-        };
-        productErrorFound = applyCategoryRules(
-          lineItems,
-          rule.equals.categoryId,
-          rule.criteria,
-          rule.value
-        );
-      }
-    }
-  });
+    });
+    errorFound = productErrorFound;
+  }
 
-  if (cartErrorFound && productErrorFound) {
+  if (errorFound) {
     return res.status(400).json({
       errors: [
         {
