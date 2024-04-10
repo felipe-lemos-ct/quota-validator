@@ -66,7 +66,7 @@ const applyCategoryRules = async (
       } else if (criteria === "value") {
         console.log("Category Value Validation - Line Item Value:");
         console.log("Max value: ", totalValue);
-        console.log("LineItem Qty:", lineTtlValue);
+        console.log("LineItems Value:", lineTtlValue);
         console.log(lineTtlValue > totalValue);
         if (lineTtlValue > totalValue) {
           errorFound = true;
