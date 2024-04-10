@@ -209,7 +209,7 @@ app.post("/ct-cart", async (req, res) => {
           criteria: rule.criteria,
           equals: rule.equals.categoryName["en-US"],
         };
-        productErrorFound = !applyCategoryRules(
+        productErrorFound = applyCategoryRules(
           lineItems,
           rule.equals.categoryId,
           rule.criteria,
@@ -219,7 +219,7 @@ app.post("/ct-cart", async (req, res) => {
     }
   });
 
-  if (cartErrorFound || productErrorFound) {
+  if (cartErrorFound && productErrorFound) {
     return res.status(400).json({
       errors: [
         {
