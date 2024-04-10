@@ -21,45 +21,6 @@ const applySampleRules = (lineItems, maxQty, sampleProductType) => {
   return count <= maxQty;
 };
 
-/**
-const applyCategoryRules = async (
-  lineItems,
-  categoryId,
-  criteria,
-  totalValue
-) => {
-  const wantedCategoryId = categoryId;
-
-  const fetchPromises = lineItems.map(async (lineItem) => {
-    const response = await fetchCt(`products/${lineItem.productId}`, {
-      method: "GET",
-    });
-    const responseData = await response.json();
-    return {
-      lineItem: lineItem,
-      categories: responseData.masterData?.current?.categories,
-    };
-  });
-
-  let errorFound = false;
-  const promises = await Promise.all(fetchPromises);
-
-  promises.forEach((promise) => {
-    promise.categories.forEach((category) => {
-      if (category.id === wantedCategoryId) {
-        const lineQty = promise.lineItem.quantity;
-        if (lineQty > totalValue) {
-          errorFound = true;
-        }
-      }
-    });
-  });
-
-  console.log("Error found?", errorFound);
-  return errorFound;
-};
-*/
-
 const applyCategoryRules = async (
   lineItems,
   categoryId,
@@ -179,10 +140,11 @@ app.post("/ct-cart", async (req, res) => {
   let errorFound = false;
   let ruleFlag = null;
 
-  if (totalPrice > maximumCartValue) {
-    errorFound = true;
-    ruleFlag = { criteria: "value" };
-  }
+  if (maximumCartValue)
+    if (totalPrice > maximumCartValue) {
+      errorFound = true;
+      ruleFlag = { criteria: "value" };
+    }
 
   if (
     !applySampleRules(
@@ -202,6 +164,7 @@ app.post("/ct-cart", async (req, res) => {
   }
 
   let productErrorFound = false;
+
   if (!errorFound) {
     for (const rule of productRules) {
       if (!productErrorFound) {
