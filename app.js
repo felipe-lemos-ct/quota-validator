@@ -39,6 +39,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
     .then((promises) => {
       if (criteria === "quantity") {
         //NEED TO CHECK QTY OF THAT LINE ITEM:
+        console.log("Category Quantity Validation");
         let lineQty = 0;
         promises.forEach((promise) => {
           promise.categories.forEach((category) => {
@@ -47,8 +48,14 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
             }
           });
 
-          //console.log(totalValue);
+          console.log("Category Quantity Validation - Line Item qty:");
+          console.log(totalValue <= lineQty);
         });
+
+        console.log("Category Quantity Validation - Line Item qty:");
+        console.log("Max value: ", totalValue);
+        console.log("LineItem Qty:", lineQty);
+        console.log(totalValue <= lineQty);
 
         if (totalValue <= lineQty) {
           return true;
@@ -79,7 +86,10 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
         {});
 
         if (totalValue > lineQty) {
-          console.log("I should not be here.");
+          console.log("Category Quantity Validation - Line Items count:");
+          console.log("Max value: ", totalValue);
+          console.log("LineItem Qty:", categoryIdsAndCounts[wantedCategoryId]);
+          console.log(categoryIdsAndCounts[wantedCategoryId] <= lineQty);
           return categoryIdsAndCounts[wantedCategoryId] <= totalValue;
         }
       }
@@ -118,6 +128,8 @@ app.post("/ct-cart", async (req, res) => {
   const lineItems = cart.lineItems;
 
   const totalPrice = cart.totalPrice.centAmount / 100;
+
+  console.log(cart);
 
   const customerGroupKey = await fetchCt(
     `customers/${customerId}?expand=customerGroup`,
@@ -185,6 +197,8 @@ app.post("/ct-cart", async (req, res) => {
         );
       }
       if (rule.type === "category") {
+        console.log("Category validation:");
+        console.log(rule);
         ruleFlag = {
           type: rule.type,
           value: rule.value,
