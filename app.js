@@ -47,9 +47,6 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
               lineQty += promise.lineItem.quantity;
             }
           });
-
-          console.log("Category Quantity Validation - Line Item qty:");
-          console.log(totalValue <= lineQty);
         });
 
         console.log("Category Quantity Validation - Line Item qty:");
@@ -92,7 +89,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
             "LineItem Qty count:",
             categoryIdsAndCounts[wantedCategoryId]
           );
-          console.log(categoryIdsAndCounts[wantedCategoryId] >= lineQty);
+          console.log(categoryIdsAndCounts[wantedCategoryId] >= totalValue);
           return categoryIdsAndCounts[wantedCategoryId] >= totalValue;
         }
       }
