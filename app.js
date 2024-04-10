@@ -35,6 +35,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
     };
   });
 
+  let errorFound = false;
   Promise.all(fetchPromises)
     .then((promises) => {
       if (criteria === "quantity") {
@@ -52,10 +53,10 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
         console.log("Category Quantity Validation - Line Item qty:");
         console.log("Max value: ", totalValue);
         console.log("LineItem Qty:", lineQty);
-        console.log(totalValue <= lineQty);
+        console.log(lineQty > totalValue);
 
-        if (totalValue <= lineQty) {
-          return true;
+        if (lineQty > totalValue) {
+          errorFound = true;
         }
 
         const categoriesForFlatten = promises.map((promise) => {
@@ -82,17 +83,20 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
         },
         {});
 
-        if (totalValue > lineQty) {
+        if (!errorFound) {
           console.log("Category Quantity Validation - Line Items count:");
           console.log("Max value count: ", totalValue);
           console.log(
             "LineItem Qty count:",
             categoryIdsAndCounts[wantedCategoryId]
           );
-          console.log(categoryIdsAndCounts[wantedCategoryId] >= totalValue);
-          return parseInt(categoryIdsAndCounts[wantedCategoryId]) >= totalValue;
+          console.log(categoryIdsAndCounts[wantedCategoryId] > totalValue);
+          if (parseInt(categoryIdsAndCounts[wantedCategoryId]) > totalValue) {
+            errorFound = true;
+          }
         }
       }
+      return errorFound;
     })
     .catch((error) => {
       console.error("Error fetching categories:", error);
