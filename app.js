@@ -6,10 +6,6 @@ import { fetchCt } from "./commercetools/auth.js";
 const PORT = process.env.PORT || 8080;
 app.use(bodyParser.json());
 
-app.get("/", (req, res) => {
-  res.send("Welcome to subscription handler.");
-});
-
 const applySampleRules = (lineItems, maxQty, sampleProductType) => {
   let count = 0;
   lineItems.forEach((lineItem) => {
@@ -18,7 +14,11 @@ const applySampleRules = (lineItems, maxQty, sampleProductType) => {
     }
   });
 
-  return count <= maxQty;
+  console.log("Samples Quantity Validation:");
+  console.log("Max Qty: ", maxQty);
+  console.log("Quantity on Cart:", count);
+  console.log("Quota exceeded? ", count > maxQty);
+  return count > maxQty;
 };
 
 const applyCategoryRules = async (
@@ -59,7 +59,7 @@ const applyCategoryRules = async (
         console.log("Category Quantity Validation - Line Item qty:");
         console.log("Max value: ", totalValue);
         console.log("LineItem Qty:", lineQty);
-        console.log(lineQty > totalValue);
+        console.log("Quota exceeded? ", lineQty > totalValue);
         if (lineQty > totalValue) {
           errorFound = true;
         }
@@ -67,7 +67,7 @@ const applyCategoryRules = async (
         console.log("Category Value Validation - Line Item Value:");
         console.log("Max value: ", totalValue);
         console.log("LineItems Value:", lineTtlValue);
-        console.log(lineTtlValue > totalValue);
+        console.log("Quota exceeded? ", lineTtlValue > totalValue);
         if (lineTtlValue > totalValue) {
           errorFound = true;
         }
@@ -91,15 +91,23 @@ const applySKURules = (lineItems, sku, criteria, totalValue) => {
         count += lineItem.quantity;
       }
       if (criteria === "value") {
-        value = parseInt(lineItem.totalPrice.centAmount) <= totalValue * 100;
+        value = parseInt(lineItem.totalPrice.centAmount) > totalValue * 100;
       }
     }
   });
 
   if (value !== null) {
+    console.log("SKU Maximum Value Validation:");
+    console.log("Max Value: ", totalValue);
+    console.log("Value on cart:", value);
+    console.log("Quota exceeded? ", value > totalValue * 100);
     return value;
   }
-  return count <= totalValue;
+  console.log("SKU Maximum Quantity Validation:");
+  console.log("Max Quantity: ", totalValue);
+  console.log("Qty on cart:", count);
+  console.log("Quota exceeded? ", count > totalValue * 100);
+  return count > totalValue;
 };
 
 const applyFlagRules = (lineItems, equals, criteria, totalValue) => {
@@ -126,7 +134,7 @@ const applyFlagRules = (lineItems, equals, criteria, totalValue) => {
     console.log("Flag Maximum Value Validation:");
     console.log("Max Value: ", totalValue);
     console.log("Value on cart:", value);
-    console.log(value > totalValue * 100);
+    console.log("Quota exceeded? ", value > totalValue * 100);
     hasError = value > totalValue * 100;
   }
 
@@ -134,7 +142,7 @@ const applyFlagRules = (lineItems, equals, criteria, totalValue) => {
     console.log("Flag Maximum Quantity Validation:");
     console.log("Max Quantity: ", totalValue);
     console.log("Qty on cart:", count);
-    console.log(count > totalValue * 100);
+    console.log("Quota exceeded? ", count > totalValue * 100);
     hasError = count > totalValue;
   }
   return hasError;
@@ -189,21 +197,14 @@ app.post("/ct-cart", async (req, res) => {
     }
   }
 
-  if (
-    !applySampleRules(
+  if (maxSamples) {
+    console.log("Samples validation:");
+    ruleFlag = { type: "samples", criteria: "quantity", equals: "Samples" };
+    errorFound = applySampleRules(
       lineItems,
       maxSamples,
       "600388e2-0976-493e-929d-91800b0b3207"
-    )
-  ) {
-    return res.status(400).json({
-      errors: [
-        {
-          code: "InvalidInput",
-          message: "The maximum quantity of Samples has been exceeded.",
-        },
-      ],
-    });
+    );
   }
 
   let productErrorFound = false;
@@ -214,7 +215,7 @@ app.post("/ct-cart", async (req, res) => {
         ruleFlag = rule;
         if (rule.type === "sku") {
           console.log("SKU validation:");
-          productErrorFound = !applySKURules(
+          productErrorFound = applySKURules(
             lineItems,
             rule.equals,
             rule.criteria,
