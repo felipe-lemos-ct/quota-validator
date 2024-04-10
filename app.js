@@ -90,7 +90,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
             categoryIdsAndCounts[wantedCategoryId]
           );
           console.log(categoryIdsAndCounts[wantedCategoryId] >= totalValue);
-          return categoryIdsAndCounts[wantedCategoryId] >= totalValue;
+          return parseInt(categoryIdsAndCounts[wantedCategoryId]) >= totalValue;
         }
       }
     })
