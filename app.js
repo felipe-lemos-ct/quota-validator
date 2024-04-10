@@ -36,7 +36,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
   });
 
   let errorFound = false;
-  Promise.all(fetchPromises)
+  errorFound = Promise.all(fetchPromises)
     .then((promises) => {
       if (criteria === "quantity") {
         //NEED TO CHECK QTY OF THAT LINE ITEM:
@@ -59,6 +59,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
           errorFound = true;
         }
 
+        /**
         const categoriesForFlatten = promises.map((promise) => {
           if (promise.categories.length > 0) {
             return promise.categories;
@@ -95,6 +96,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
             errorFound = true;
           }
         }
+      } */
       }
       return errorFound;
     })
