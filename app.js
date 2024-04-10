@@ -21,6 +21,7 @@ const applySampleRules = (lineItems, maxQty, sampleProductType) => {
   return count <= maxQty;
 };
 
+/**
 const applyCategoryRules = async (
   lineItems,
   categoryId,
@@ -56,6 +57,98 @@ const applyCategoryRules = async (
 
   console.log("Error found?", errorFound);
   return errorFound;
+};
+*/
+
+const applyCategoryRules = async (
+  lineItems,
+  categoryId,
+  criteria,
+  totalValue
+) => {
+  const wantedCategoryId = categoryId;
+
+  const fetchPromises = lineItems.map(async (lineItem) => {
+    const response = await fetchCt(`products/${lineItem.productId}`, {
+      method: "GET",
+    });
+    const responseData = await response.json();
+    return {
+      lineItem: lineItem,
+      categories: responseData.masterData?.current?.categories,
+    };
+  });
+  let errorFound = false;
+  const result = await Promise.all(fetchPromises)
+    .then((promises) => {
+      if (criteria === "quantity") {
+        //NEED TO CHECK QTY OF THAT LINE ITEM:
+        console.log("Category Quantity Validation");
+        let lineQty = 0;
+        promises.forEach((promise) => {
+          promise.categories.forEach((category) => {
+            if (category.id === wantedCategoryId) {
+              lineQty += promise.lineItem.quantity;
+            }
+          });
+        });
+
+        console.log("Category Quantity Validation - Line Item qty:");
+        console.log("Max value: ", totalValue);
+        console.log("LineItem Qty:", lineQty);
+        console.log(lineQty > totalValue);
+
+        if (lineQty > totalValue) {
+          errorFound = true;
+        }
+
+        return errorFound;
+        /**
+        const categoriesForFlatten = promises.map((promise) => {
+          if (promise.categories.length > 0) {
+            return promise.categories;
+          }
+        });
+
+        const flatCategories = categoriesForFlatten.flat();
+
+        let categoryIds = flatCategories.map((category) => {
+          if (category) {
+            return category.id;
+          }
+        });
+
+        categoryIds = categoryIds.filter(Boolean);
+
+        let categoryIdsAndCounts = categoryIds?.reduce(function (
+          value,
+          value2
+        ) {
+          return value[value2] ? ++value[value2] : (value[value2] = 1), value;
+        },
+        {});
+
+        if (!errorFound) {
+          console.log("Category Quantity Validation - Line Items count:");
+          console.log("Max value count: ", totalValue);
+          console.log(
+            "LineItem Qty count:",
+            categoryIdsAndCounts[wantedCategoryId]
+          );
+          console.log(categoryIdsAndCounts[wantedCategoryId] > totalValue);
+          if (parseInt(categoryIdsAndCounts[wantedCategoryId]) > totalValue) {
+            errorFound = true;
+          }
+        }
+      } */
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching categories:", error);
+    });
+
+  //console.log("outside: error found status: ", result);
+  return result;
 };
 
 const applySKURules = (lineItems, sku, criteria, totalValue) => {
