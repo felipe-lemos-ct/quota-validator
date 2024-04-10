@@ -140,13 +140,15 @@ app.post("/ct-cart", async (req, res) => {
   let errorFound = false;
   let ruleFlag = null;
 
-  if (maximumCartValue) console.log("Cart Maximum value Validation:");
-  console.log("Max Cart value: ", maximumCartValue);
-  console.log("Cart Total Value:", totalPrice);
-  console.log(totalPrice > maximumCartValue);
-  if (totalPrice > maximumCartValue) {
-    errorFound = true;
-    ruleFlag = { criteria: "value" };
+  if (maximumCartValue) {
+    console.log("Cart Maximum value Validation:");
+    console.log("Max Cart value: ", maximumCartValue);
+    console.log("Cart Total Value:", totalPrice);
+    console.log(totalPrice > maximumCartValue);
+    if (totalPrice > maximumCartValue) {
+      errorFound = true;
+      ruleFlag = { criteria: "value" };
+    }
   }
 
   if (
