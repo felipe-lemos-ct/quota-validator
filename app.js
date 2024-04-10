@@ -94,16 +94,19 @@ const applyCategoryRules = async (
         });
       });
 
-      console.log("Category Quantity Validation - Line Item qty:");
-      console.log("Max value: ", totalValue);
-      console.log("LineItem Qty:", lineQty);
-      console.log(lineQty > totalValue);
-
       if (criteria === "quantity") {
+        console.log("Category Quantity Validation - Line Item qty:");
+        console.log("Max value: ", totalValue);
+        console.log("LineItem Qty:", lineQty);
+        console.log(lineQty > totalValue);
         if (lineQty > totalValue) {
           errorFound = true;
         }
       } else if (criteria === "value") {
+        console.log("Category Value Validation - Line Item Value:");
+        console.log("Max value: ", totalValue);
+        console.log("LineItem Qty:", lineTtlValue);
+        console.log(lineTtlValue > totalValue);
         if (lineTtlValue > totalValue) {
           errorFound = true;
         }
