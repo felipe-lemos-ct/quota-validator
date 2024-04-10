@@ -21,9 +21,14 @@ const applySampleRules = (lineItems, maxQty, sampleProductType) => {
   return count <= maxQty;
 };
 
-const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
+const applyCategoryRules = async (
+  lineItems,
+  categoryId,
+  criteria,
+  totalValue
+) => {
   const wantedCategoryId = categoryId;
-  let errorFound = false;
+
   const fetchPromises = lineItems.map(async (lineItem) => {
     const response = await fetchCt(`products/${lineItem.productId}`, {
       method: "GET",
@@ -34,8 +39,8 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
       categories: responseData.masterData?.current?.categories,
     };
   });
-
-  Promise.all(fetchPromises)
+  let errorFound = false;
+  const result = await Promise.all(fetchPromises)
     .then((promises) => {
       if (criteria === "quantity") {
         //NEED TO CHECK QTY OF THAT LINE ITEM:
@@ -58,6 +63,7 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
           errorFound = true;
         }
 
+        return errorFound;
         /**
         const categoriesForFlatten = promises.map((promise) => {
           if (promise.categories.length > 0) {
@@ -102,8 +108,8 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
       console.error("Error fetching categories:", error);
     });
 
-  console.log("outside: error found status: ", errorFound);
-  return errorFound;
+  console.log("outside: error found status: ", result);
+  return result;
 };
 
 const applySKURules = (lineItems, sku, criteria, totalValue) => {
@@ -136,7 +142,7 @@ app.post("/ct-cart", async (req, res) => {
 
   const totalPrice = cart.totalPrice.centAmount / 100;
 
-  console.log(cart);
+  //console.log(cart);
 
   const customerGroupKey = await fetchCt(
     `customers/${customerId}?expand=customerGroup`,
