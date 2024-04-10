@@ -87,10 +87,13 @@ const applyCategoryRules = (lineItems, categoryId, criteria, totalValue) => {
 
         if (totalValue > lineQty) {
           console.log("Category Quantity Validation - Line Items count:");
-          console.log("Max value: ", totalValue);
-          console.log("LineItem Qty:", categoryIdsAndCounts[wantedCategoryId]);
-          console.log(categoryIdsAndCounts[wantedCategoryId] <= lineQty);
-          return categoryIdsAndCounts[wantedCategoryId] <= totalValue;
+          console.log("Max value count: ", totalValue);
+          console.log(
+            "LineItem Qty count:",
+            categoryIdsAndCounts[wantedCategoryId]
+          );
+          console.log(categoryIdsAndCounts[wantedCategoryId] >= lineQty);
+          return categoryIdsAndCounts[wantedCategoryId] >= totalValue;
         }
       }
     })
