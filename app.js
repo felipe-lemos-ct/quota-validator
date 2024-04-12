@@ -42,7 +42,6 @@ const applyCategoryRules = async (
   let errorFound = false;
   const result = await Promise.all(fetchPromises)
     .then((promises) => {
-      //NEED TO CHECK QTY OF THAT LINE ITEM:
       console.log("Category Quantity Validation");
       let lineQty = 0;
       let lineTtlValue = 0;
@@ -149,7 +148,7 @@ const applyFlagRules = (lineItems, equals, criteria, totalValue) => {
 };
 
 app.post("/ct-cart", async (req, res) => {
-  const storeKey = req.body.resource.obj.store.key;
+  const storeKey = req.body.resource.obj.store?.key || "";
   const customerId = req.body.resource.obj.customerId;
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
