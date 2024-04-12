@@ -153,119 +153,121 @@ app.post("/ct-cart", async (req, res) => {
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
 
-  const totalPrice = cart.totalPrice.centAmount / 100;
+  console.log(storeKey);
+  if (storeKey !== "") {
+    const totalPrice = cart.totalPrice.centAmount / 100;
 
-  const customerGroupKey = await fetchCt(
-    `customers/${customerId}?expand=customerGroup`,
-    {
-      method: "GET",
+    const customerGroupKey = await fetchCt(
+      `customers/${customerId}?expand=customerGroup`,
+      {
+        method: "GET",
+      }
+    )
+      .then((response) => response.json())
+      .then((response) => {
+        return response?.customerGroup?.obj?.key;
+      });
+
+    let objectKey = "general-cart-rules";
+    if (customerGroupKey === "employee") {
+      objectKey = "employee-cart-rules";
     }
-  )
-    .then((response) => response.json())
-    .then((response) => {
-      return response?.customerGroup?.obj?.key;
-    });
 
-  let objectKey = "general-cart-rules";
-  if (customerGroupKey === "employee") {
-    objectKey = "employee-cart-rules";
-  }
+    const { maximumCartValue, maxSamples, productRules } = await fetchCt(
+      `custom-objects/${objectKey}/${storeKey}`,
+      {
+        method: "GET",
+      }
+    )
+      .then((response) => response.json())
+      .then((response) => {
+        return response.value;
+      });
 
-  const { maximumCartValue, maxSamples, productRules } = await fetchCt(
-    `custom-objects/${objectKey}/${storeKey}`,
-    {
-      method: "GET",
-    }
-  )
-    .then((response) => response.json())
-    .then((response) => {
-      return response.value;
-    });
+    let errorFound = false;
+    let ruleFlag = null;
 
-  let errorFound = false;
-  let ruleFlag = null;
-
-  if (maximumCartValue) {
-    console.log("Cart Maximum value Validation:");
-    console.log("Max Cart value: ", maximumCartValue);
-    console.log("Cart Total Value:", totalPrice);
-    console.log(totalPrice > maximumCartValue);
-    if (totalPrice > maximumCartValue) {
-      errorFound = true;
-      ruleFlag = { criteria: "value" };
-    }
-  }
-
-  if (!errorFound && maxSamples) {
-    console.log("Samples validation:");
-    ruleFlag = { type: "samples", criteria: "quantity", equals: "Samples" };
-    errorFound = applySampleRules(
-      lineItems,
-      maxSamples,
-      "600388e2-0976-493e-929d-91800b0b3207"
-    );
-  }
-
-  let productErrorFound = false;
-
-  if (!errorFound) {
-    for (const rule of productRules) {
-      if (!productErrorFound) {
-        ruleFlag = rule;
-        if (rule.type === "sku") {
-          console.log("SKU validation:");
-          productErrorFound = applySKURules(
-            lineItems,
-            rule.equals,
-            rule.criteria,
-            rule.value
-          );
-        }
-        if (rule.type === "category") {
-          console.log("Category validation:");
-          ruleFlag = {
-            type: rule.type,
-            value: rule.value,
-            criteria: rule.criteria,
-            equals: rule.equals.categoryName["en-US"],
-          };
-          productErrorFound = await applyCategoryRules(
-            lineItems,
-            rule.equals.categoryId,
-            rule.criteria,
-            rule.value
-          );
-        }
-        if (rule.type === "flag") {
-          console.log("Flag validation:");
-          ruleFlag = rule;
-          productErrorFound = applyFlagRules(
-            lineItems,
-            rule.equals,
-            rule.criteria,
-            rule.value
-          );
-        }
+    if (maximumCartValue) {
+      console.log("Cart Maximum value Validation:");
+      console.log("Max Cart value: ", maximumCartValue);
+      console.log("Cart Total Value:", totalPrice);
+      console.log(totalPrice > maximumCartValue);
+      if (totalPrice > maximumCartValue) {
+        errorFound = true;
+        ruleFlag = { criteria: "value" };
       }
     }
-    errorFound = productErrorFound;
-  }
 
-  if (errorFound) {
-    return res.status(400).json({
-      errors: [
-        {
-          code: "InvalidInput",
-          message: `The maximum total ${ruleFlag.criteria} allowed ${
-            ruleFlag.type
-              ? `for ${ruleFlag.type} = ${ruleFlag.equals}`
-              : `for cart`
-          } has been exceeded.`,
-        },
-      ],
-    });
-  }
+    if (!errorFound && maxSamples) {
+      console.log("Samples validation:");
+      ruleFlag = { type: "samples", criteria: "quantity", equals: "Samples" };
+      errorFound = applySampleRules(
+        lineItems,
+        maxSamples,
+        "600388e2-0976-493e-929d-91800b0b3207"
+      );
+    }
 
+    let productErrorFound = false;
+
+    if (!errorFound && storeKey !== "") {
+      for (const rule of productRules) {
+        if (!productErrorFound) {
+          ruleFlag = rule;
+          if (rule.type === "sku") {
+            console.log("SKU validation:");
+            productErrorFound = applySKURules(
+              lineItems,
+              rule.equals,
+              rule.criteria,
+              rule.value
+            );
+          }
+          if (rule.type === "category") {
+            console.log("Category validation:");
+            ruleFlag = {
+              type: rule.type,
+              value: rule.value,
+              criteria: rule.criteria,
+              equals: rule.equals.categoryName["en-US"],
+            };
+            productErrorFound = await applyCategoryRules(
+              lineItems,
+              rule.equals.categoryId,
+              rule.criteria,
+              rule.value
+            );
+          }
+          if (rule.type === "flag") {
+            console.log("Flag validation:");
+            ruleFlag = rule;
+            productErrorFound = applyFlagRules(
+              lineItems,
+              rule.equals,
+              rule.criteria,
+              rule.value
+            );
+          }
+        }
+      }
+      errorFound = productErrorFound;
+    }
+
+    if (errorFound) {
+      return res.status(400).json({
+        errors: [
+          {
+            code: "InvalidInput",
+            message: `The maximum total ${ruleFlag.criteria} allowed ${
+              ruleFlag.type
+                ? `for ${ruleFlag.type} = ${ruleFlag.equals}`
+                : `for cart`
+            } has been exceeded.`,
+          },
+        ],
+      });
+    }
+  }
   return res.status(200).end();
 });
 
