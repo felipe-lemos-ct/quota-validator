@@ -162,7 +162,7 @@ const applyFlagRules = (lineItems, equals, criteria, totalValue) => {
         count += lineItem.quantity;
       }
       if (criteria === "value") {
-        value += parseInt(lineItem.totalPrice.centAmount);
+        value += lineItem.totalPrice.centAmount;
       }
     }
   });
@@ -171,8 +171,8 @@ const applyFlagRules = (lineItems, equals, criteria, totalValue) => {
     console.log("Flag Maximum Value Validation:");
     console.log("Max Value: ", totalValue);
     console.log("Value on cart:", value);
-    console.log("Quota exceeded? ", value > totalValue * 100);
-    hasError = value > totalValue * 100;
+    console.log("Quota exceeded? ", value > totalValue.centAmount);
+    hasError = value > totalValue.centAmount;
   }
 
   if (count > 0) {
