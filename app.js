@@ -45,15 +45,16 @@ const applyCategoryRules = async (
       console.log("Category Quantity Validation");
       let lineQty = 0;
       let lineTtlValue = 0;
+      let currency = "";
       promises.forEach((promise) => {
         promise.categories.forEach((category) => {
           if (category.id === wantedCategoryId) {
             lineQty += promise.lineItem.quantity;
-            lineTtlValue += promise.lineItem.totalPrice.centAmount / 100;
+            lineTtlValue += promise.lineItem.totalPrice.centAmount;
+            currency = promise.lineItem.totalPrice.currencyCode;
           }
         });
       });
-
       if (criteria === "quantity") {
         console.log("Category Quantity Validation - Line Item qty:");
         console.log("Max value: ", totalValue);
@@ -63,15 +64,29 @@ const applyCategoryRules = async (
           errorFound = true;
         }
       } else if (criteria === "value") {
-        console.log("Category Value Validation - Line Item Value:");
-        console.log("Max value: ", totalValue);
-        console.log("LineItems Value:", lineTtlValue);
-        console.log("Quota exceeded? ", lineTtlValue > totalValue);
-        if (lineTtlValue > totalValue) {
-          errorFound = true;
+        console.log(
+          "Checking if LineItem has value on currency ",
+          totalValue.currencyCode
+        );
+        if (currency === totalValue.currencyCode) {
+          console.log("Category Value Validation - Line Item Value:");
+          console.log("Max value: ", totalValue);
+          console.log("LineItems Value:", lineTtlValue);
+          console.log("Quota exceeded? ", lineTtlValue > totalValue.centAmount);
+          if (lineTtlValue > totalValue.centAmount) {
+            return true;
+          }
+        } else {
+          console.log(
+            "No entries for currency ",
+            totalValue.currencyCode,
+            " found. Skipping..."
+          );
+          return false;
         }
+
+        return errorFound;
       }
-      return errorFound;
     })
     .catch((error) => {
       console.error("Error fetching categories:", error);
@@ -90,18 +105,41 @@ const applySKURules = (lineItems, sku, criteria, totalValue) => {
         count += lineItem.quantity;
       }
       if (criteria === "value") {
-        value = parseInt(lineItem.totalPrice.centAmount) > totalValue * 100;
+        value = lineItem.totalPrice;
       }
     }
   });
 
   if (value !== null) {
-    console.log("SKU Maximum Value Validation:");
-    console.log("Max Value: ", totalValue);
-    console.log("Value on cart:", value);
-    console.log("Quota exceeded? ", value > totalValue * 100);
-    return value;
+    console.log(
+      "Checking if SKU ",
+      sku,
+      " has value on currency ",
+      totalValue.currencyCode
+    );
+    if (totalValue.currencyCode === value.currencyCode) {
+      console.log("SKU Maximum Value Validation:");
+      console.log("Max Value: ", totalValue);
+      console.log("Value on cart:", value);
+      console.log(
+        "Value Quota exceeded? ",
+        value.centAmount > totalValue.centAmount
+      );
+      if (value.centAmount > totalValue.centAmount) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      console.log(
+        "No entries for currency ",
+        totalValue.currencyCode,
+        " found. Skipping..."
+      );
+      return false;
+    }
   }
+
   console.log("SKU Maximum Quantity Validation:");
   console.log("Max Quantity: ", totalValue);
   console.log("Qty on cart:", count);
@@ -153,9 +191,8 @@ app.post("/ct-cart", async (req, res) => {
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
 
-  console.log(storeKey);
   if (storeKey !== "") {
-    const totalPrice = cart.totalPrice.centAmount / 100;
+    const totalPrice = cart.totalPrice;
 
     const customerGroupKey = await fetchCt(
       `customers/${customerId}?expand=customerGroup`,
@@ -189,13 +226,17 @@ app.post("/ct-cart", async (req, res) => {
 
     if (maximumCartValue) {
       console.log("Cart Maximum value Validation:");
-      console.log("Max Cart value: ", maximumCartValue);
+      console.log("Max Cart values: ", maximumCartValue);
       console.log("Cart Total Value:", totalPrice);
       console.log(totalPrice > maximumCartValue);
-      if (totalPrice > maximumCartValue) {
-        errorFound = true;
-        ruleFlag = { criteria: "value" };
-      }
+      maximumCartValue.map((maxCartRule) => {
+        if (totalPrice.currencyCode === maxCartRule.currencyCode) {
+          if (totalPrice.centAmount > maxCartRule.centAmount) {
+            errorFound = true;
+            ruleFlag = { criteria: "value" };
+          }
+        }
+      });
     }
 
     if (!errorFound && maxSamples) {
@@ -215,7 +256,6 @@ app.post("/ct-cart", async (req, res) => {
         if (!productErrorFound) {
           ruleFlag = rule;
           if (rule.type === "sku") {
-            console.log("SKU validation:");
             productErrorFound = applySKURules(
               lineItems,
               rule.equals,
@@ -224,7 +264,6 @@ app.post("/ct-cart", async (req, res) => {
             );
           }
           if (rule.type === "category") {
-            console.log("Category validation:");
             ruleFlag = {
               type: rule.type,
               value: rule.value,
@@ -239,7 +278,6 @@ app.post("/ct-cart", async (req, res) => {
             );
           }
           if (rule.type === "flag") {
-            console.log("Flag validation:");
             ruleFlag = rule;
             productErrorFound = applyFlagRules(
               lineItems,
