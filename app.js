@@ -228,6 +228,7 @@ app.post("/ct-cart", async (req, res) => {
     const objectKey = customerGroupKey;
 
     try {
+      console.log("Fetching rules for ", objectKey);
       const { maximumCartValue, maxSamples, productRules } = await fetchCt(
         `custom-objects/${objectKey}/${storeKey}`,
         {
@@ -239,7 +240,25 @@ app.post("/ct-cart", async (req, res) => {
           return response.value;
         });
     } catch (error) {
-      console.log(error);
+      console.log("Fetching rules for All Customers");
+      try {
+        const { maximumCartValue, maxSamples, productRules } = await fetchCt(
+          `custom-objects/general-cart-rules/${storeKey}`,
+          {
+            method: "GET",
+          }
+        )
+          .then((response) => response.json())
+          .then((response) => {
+            return response.value;
+          });
+      } catch (error) {
+        console.log("No rules found... skipping");
+        const maximumCartValue = null;
+        const maxSamples = null;
+        const productRules = [];
+        return res.status(200).end();
+      }
     }
     let errorFound = false;
     let ruleFlag = null;
