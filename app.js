@@ -227,17 +227,20 @@ app.post("/ct-cart", async (req, res) => {
 
     const objectKey = customerGroupKey;
 
-    const { maximumCartValue, maxSamples, productRules } = await fetchCt(
-      `custom-objects/${objectKey}/${storeKey}`,
-      {
-        method: "GET",
-      }
-    )
-      .then((response) => response.json())
-      .then((response) => {
-        return response.value;
-      });
-
+    try {
+      const { maximumCartValue, maxSamples, productRules } = await fetchCt(
+        `custom-objects/${objectKey}/${storeKey}`,
+        {
+          method: "GET",
+        }
+      )
+        .then((response) => response.json())
+        .then((response) => {
+          return response.value;
+        });
+    } catch (error) {
+      console.log(error);
+    }
     let errorFound = false;
     let ruleFlag = null;
 
