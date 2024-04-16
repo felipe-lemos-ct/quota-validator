@@ -232,7 +232,7 @@ app.post("/ct-cart", async (req, res) => {
 
     try {
       console.log("Fetching rules for ", objectKey);
-      const { maximumCartValue, maxSamples, productRules } = await fetchCt(
+       { maximumCartValue, maxSamples, productRules } = await fetchCt(
         `custom-objects/${objectKey}/${storeKey}`,
         {
           method: "GET",
@@ -246,7 +246,7 @@ app.post("/ct-cart", async (req, res) => {
     } catch (error) {
       console.log("Fetching rules for All Customers");
       try {
-        const { maximumCartValue, maxSamples, productRules } = await fetchCt(
+         { maximumCartValue, maxSamples, productRules } = await fetchCt(
           `custom-objects/general-cart-rules/${storeKey}`,
           {
             method: "GET",
