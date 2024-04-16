@@ -204,9 +204,6 @@ app.post("/ct-cart", async (req, res) => {
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
 
-  console.log(cart);
-  console.log(JSON.stringify(cart));
-
   if (storeKey !== "") {
     const totalPrice = cart.totalPrice;
 
@@ -238,10 +235,15 @@ app.post("/ct-cart", async (req, res) => {
       })
         .then((response) => response.json())
         .then((response) => {
-          console.log(response);
-          return response.value;
+          //console.log(response);
+          return response;
         });
     } catch (error) {
+      console.log(error);
+    }
+
+    if (response.statusCode) {
+      console.log(`Couldn't find rules for ${objectKey}.`);
       console.log("Fetching rules for All Customers");
       try {
         response = await fetchCt(
@@ -253,20 +255,18 @@ app.post("/ct-cart", async (req, res) => {
         )
           .then((response) => response.json())
           .then((response) => {
-            console.log(response);
-            return response.value;
+            return response;
           });
       } catch (error) {
         console.log("No rules found... skipping");
 
         return res.status(200).end();
       }
-    } finally {
-      const maximumCartValue = response.maximumCartValue;
-      const maxSamples = response.maxSamples;
-      const productRules = response.productRules;
-      console.log(maximumCartValue);
     }
+
+    const maximumCartValue = response.value.maximumCartValue || "";
+    const maxSamples = response.value.maxSamples || "";
+    const productRules = response.value.productRules || [];
 
     let errorFound = false;
     let ruleFlag = null;
