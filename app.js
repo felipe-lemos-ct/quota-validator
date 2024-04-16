@@ -264,9 +264,12 @@ app.post("/ct-cart", async (req, res) => {
       }
     }
 
-    const maximumCartValue = response.value.maximumCartValue || "";
-    const maxSamples = response.value.maxSamples || "";
-    const productRules = response.value.productRules || [];
+    if (response.statusCode) {
+      console.log("Found no rules for quotas for store ", storeKey);
+    }
+    const maximumCartValue = response?.value?.maximumCartValue || "";
+    const maxSamples = response?.value?.maxSamples || "";
+    const productRules = response?.value?.productRules || [];
 
     let errorFound = false;
     let ruleFlag = null;
