@@ -226,6 +226,9 @@ app.post("/ct-cart", async (req, res) => {
      */
 
     const objectKey = customerGroupKey;
+    let maximumCartValue = null;
+    let maxSamples = null;
+    let productRules = [];
 
     try {
       console.log("Fetching rules for ", objectKey);
@@ -237,6 +240,7 @@ app.post("/ct-cart", async (req, res) => {
       )
         .then((response) => response.json())
         .then((response) => {
+          console.log(response);
           return response.value;
         });
     } catch (error) {
@@ -250,13 +254,12 @@ app.post("/ct-cart", async (req, res) => {
         )
           .then((response) => response.json())
           .then((response) => {
+            console.log(response);
             return response.value;
           });
       } catch (error) {
         console.log("No rules found... skipping");
-        const maximumCartValue = null;
-        const maxSamples = null;
-        const productRules = [];
+
         return res.status(200).end();
       }
     }
