@@ -204,6 +204,9 @@ app.post("/ct-cart", async (req, res) => {
   const cart = req.body.resource.obj;
   const lineItems = cart.lineItems;
 
+  console.log(cart);
+  console.log(JSON.stringify(cart));
+
   if (storeKey !== "") {
     const totalPrice = cart.totalPrice;
 
@@ -226,21 +229,11 @@ app.post("/ct-cart", async (req, res) => {
      */
 
     const objectKey = customerGroupKey;
+    let response = null;
 
-    console.log("Fetching rules for ", objectKey);
-    let rules = await fetchCt(`custom-objects/${objectKey}/${storeKey}`, {
-      method: "GET",
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        console.log(response);
-        return response.value;
-      });
-
-    if (rules.statusCode === 404) {
-      console.log("Fetching rules for All Customers");
-
-      rules = await fetchCt(`custom-objects/general-cart-rules/${storeKey}`, {
+    try {
+      console.log("Fetching rules for ", objectKey);
+      response = await fetchCt(`custom-objects/${objectKey}/${storeKey}`, {
         method: "GET",
       })
         .then((response) => response.json())
@@ -248,12 +241,33 @@ app.post("/ct-cart", async (req, res) => {
           console.log(response);
           return response.value;
         });
+    } catch (error) {
+      console.log("Fetching rules for All Customers");
+      try {
+        response = await fetchCt(
+          //const { maximumCartValue, maxSamples, productRules } = await fetchCt(
+          `custom-objects/general-cart-rules/${storeKey}`,
+          {
+            method: "GET",
+          }
+        )
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(response);
+            return response.value;
+          });
+      } catch (error) {
+        console.log("No rules found... skipping");
+
+        return res.status(200).end();
+      }
+    } finally {
+      const maximumCartValue = response.maximumCartValue;
+      const maxSamples = response.maxSamples;
+      const productRules = response.productRules;
+      console.log(maximumCartValue);
     }
 
-    console.log(rules);
-    let maximumCartValue = null;
-    let maxSamples = null;
-    let productRules = [];
     let errorFound = false;
     let ruleFlag = null;
 
