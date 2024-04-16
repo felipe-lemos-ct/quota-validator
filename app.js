@@ -168,11 +168,24 @@ const applyFlagRules = (lineItems, equals, criteria, totalValue) => {
   });
 
   if (value !== null) {
-    console.log("Flag Maximum Value Validation:");
-    console.log("Max Value: ", totalValue);
-    console.log("Value on cart:", value);
-    console.log("Quota exceeded? ", value > totalValue.centAmount);
-    hasError = value > totalValue.centAmount;
+    console.log(
+      "Checking if LineItem has value on currency ",
+      totalValue.currencyCode
+    );
+    if (totalValue.currencyCode === value.currencyCode) {
+      console.log("Flag Maximum Value Validation:");
+      console.log("Max Value: ", totalValue);
+      console.log("Value on cart:", value);
+      console.log("Quota exceeded? ", value > totalValue.centAmount);
+      hasError = value > totalValue.centAmount;
+    }
+  } else {
+    console.log(
+      "No entries for currency ",
+      totalValue.currencyCode,
+      " found. Skipping..."
+    );
+    return false;
   }
 
   if (count > 0) {
@@ -205,10 +218,14 @@ app.post("/ct-cart", async (req, res) => {
         return response?.customerGroup?.obj?.key;
       });
 
+    /**
     let objectKey = "general-cart-rules";
     if (customerGroupKey === "employee") {
       objectKey = "employee-cart-rules";
     }
+     */
+
+    const objectKey = customerGroupKey;
 
     const { maximumCartValue, maxSamples, productRules } = await fetchCt(
       `custom-objects/${objectKey}/${storeKey}`,
