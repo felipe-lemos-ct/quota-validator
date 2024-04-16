@@ -228,27 +228,21 @@ app.post("/ct-cart", async (req, res) => {
     const objectKey = customerGroupKey;
 
     console.log("Fetching rules for ", objectKey);
-    const { maximumCartValue, maxSamples, productRules } = await fetchCt(
-      `custom-objects/${objectKey}/${storeKey}`,
-      {
-        method: "GET",
-      }
-    )
+    let rules = await fetchCt(`custom-objects/${objectKey}/${storeKey}`, {
+      method: "GET",
+    })
       .then((response) => response.json())
       .then((response) => {
         console.log(response);
         return response.value;
       });
 
-    if (maximumCartValue === undefined) {
+    if (rules.statusCode === 404) {
       console.log("Fetching rules for All Customers");
 
-      const { maximumCartValue, maxSamples, productRules } = await fetchCt(
-        `custom-objects/general-cart-rules/${storeKey}`,
-        {
-          method: "GET",
-        }
-      )
+      rules = await fetchCt(`custom-objects/general-cart-rules/${storeKey}`, {
+        method: "GET",
+      })
         .then((response) => response.json())
         .then((response) => {
           console.log(response);
@@ -256,6 +250,10 @@ app.post("/ct-cart", async (req, res) => {
         });
     }
 
+    console.log(rules);
+    let maximumCartValue = null;
+    let maxSamples = null;
+    let productRules = [];
     let errorFound = false;
     let ruleFlag = null;
 
